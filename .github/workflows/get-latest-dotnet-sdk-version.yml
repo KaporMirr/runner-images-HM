@@ -1,0 +1,31 @@
+name: Get Latest .NET SDK Version
+
+on:
+  push:
+    branches:
+      - dotnet
+  pull_request:
+    branches:
+      - dotnet
+
+jobs:
+  check-dotnet-version:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-24.04]
+    
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+
+    - name: Install jq
+      run: sudo apt-get install -y jq
+
+    - name: Get latest .NET SDK version
+      run: |
+        latest_sdk_version=$(curl -s https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/9.0/releases.json | jq -r '.releases | sort_by(.sdk.date) | last | .sdk.version')
+        echo "Latest .NET SDK version: $latest_sdk_version"
+        
+        # Optionally, save the result as an output for use in other jobs
+        echo "latest_sdk_version=$latest_sdk_version" >> $GITHUB_ENV
