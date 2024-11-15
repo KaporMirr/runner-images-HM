@@ -1,6 +1,6 @@
-name: Check .NET SDK Version
+name: Install .NET SDK on Ubuntu
 
-on: 
+on:
   push:
     branches:
       - dotnet
@@ -14,31 +14,31 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04, ubuntu-20.04, ubuntu-24.04]
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Install .NET SDK 9.0.100
+    - name: Set up Microsoft package repository for .NET
       run: |
-        wget https://dotnetcli.azureedge.net/dotnet/Sdk/9.0.100/dotnet-sdk-9.0.100-linux-x64.tar.gz
-        mkdir -p $HOME/dotnet
-        tar zxf dotnet-sdk-9.0.100-linux-x64.tar.gz -C $HOME/dotnet
-        export DOTNET_ROOT=$HOME/dotnet
-        export PATH=$PATH:$HOME/dotnet
+        # Download Microsoft package signing key and package list for Ubuntu
+        wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
+        # Install the Microsoft package signing key and package repository
+        sudo dpkg -i packages-microsoft-prod.deb
+        sudo apt-get update
 
-    - name: Check .NET SDK Version
+    - name: Fetch .NET SDK version information from releases.json
       run: |
-        dotnet --version
-        
-    - name: Install .NET SDK 7.0.120
-      run: |
-        wget https://dotnetcli.azureedge.net/dotnet/Sdk/7.0.120/dotnet-sdk-7.0.120-linux-x64.tar.gz
-        mkdir -p $HOME/dotnet
-        tar zxf dotnet-sdk-9.0.100-linux-x64.tar.gz -C $HOME/dotnet
-        export DOTNET_ROOT=$HOME/dotnet
-        export PATH=$PATH:$HOME/dotnet
+        VERSION=$(curl -s https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/9.0/releases.json | jq -r '.releases | sort_by(.date) | last | .sdk.version')
+        echo "Found .NET SDK version: $VERSION"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-    - name: Check .NET SDK Version
+    - name: Install .NET SDK (version from releases.json)
       run: |
+        # Install the found version of .NET SDK
+        sudo apt-get install -y "dotnet-sdk-${{ env.VERSION }}" || echo "dotnet-sdk-${{ env.VERSION }} not available in the repository"
+
+    - name: Verify installation
+      run: |
+        # Check installed .NET SDK version
         dotnet --version
