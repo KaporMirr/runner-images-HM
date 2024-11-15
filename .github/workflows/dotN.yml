@@ -1,0 +1,19 @@
+name: Install .NET Core SDK
+
+on:
+  push:
+    branches:
+      - dotnet
+  pull_request:
+    branches:
+      - dotnet
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run install-dotnetcore-sdk.sh
+        run: ./images/ubuntu/scripts/build/install-dotnetcore-sdk.sh
